@@ -72,7 +72,7 @@ def filter_frontend_jobs(jobs):
 def send_email(jobs):
     smtp_user = os.environ["SMTP_USER"]
     smtp_pass = os.environ["SMTP_PASS"]
-    to_email = os.environ.get("ALERT_EMAIL", smtp_user)
+    to_email = os.environ.get("ALERT_EMAIL") or smtp_user
 
     subject = f"🚀 {len(jobs)} new front-end job{'s' if len(jobs) != 1 else ''} on DSCovery"
 
