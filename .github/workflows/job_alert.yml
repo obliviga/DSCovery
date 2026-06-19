@@ -27,7 +27,6 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
         run: python job_alert.py
 
       - name: Commit seen jobs state

@@ -70,9 +70,18 @@ def filter_frontend_jobs(jobs):
 
 
 def send_email(jobs):
-    smtp_user = os.environ["SMTP_USER"]
-    smtp_pass = os.environ["SMTP_PASS"]
-    to_email = os.environ.get("ALERT_EMAIL") or smtp_user
+    smtp_user = os.environ.get("SMTP_USER", "").strip()
+    smtp_pass = os.environ.get("SMTP_PASS", "").strip()
+    to_email = os.environ.get("ALERT_EMAIL", "").strip() or smtp_user
+
+    if not smtp_user or not smtp_pass:
+        raise RuntimeError(
+            "SMTP_USER and SMTP_PASS must be set as GitHub repo secrets. "
+            f"SMTP_USER={'set' if smtp_user else 'EMPTY'}, "
+            f"SMTP_PASS={'set' if smtp_pass else 'EMPTY'}"
+        )
+    if not to_email:
+        raise RuntimeError("No recipient email: set ALERT_EMAIL or SMTP_USER")
 
     subject = f"🚀 {len(jobs)} new front-end job{'s' if len(jobs) != 1 else ''} on DSCovery"
 
