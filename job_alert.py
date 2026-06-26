@@ -26,7 +26,7 @@ django.setup()
 
 SEEN_JOBS_FILE = Path(__file__).resolve().parent / "seen_jobs.json"
 IMPORTERS_DIR = Path(__file__).resolve().parent / "jobsearch" / "importers"
-KEYWORD = "front"
+KEYWORDS = ["front", "accessibility"]
 
 
 def load_seen_jobs():
@@ -65,8 +65,8 @@ def run_importers():
     return all_jobs
 
 
-def filter_frontend_jobs(jobs):
-    return [j for j in jobs if KEYWORD in j["title"].lower()]
+def filter_matching_jobs(jobs):
+    return [j for j in jobs if any(kw in j["title"].lower() for kw in KEYWORDS)]
 
 
 def send_email(jobs):
@@ -134,8 +134,8 @@ def main():
     all_jobs = run_importers()
     print(f"\nTotal jobs collected: {len(all_jobs)}")
 
-    frontend_jobs = filter_frontend_jobs(all_jobs)
-    print(f"Jobs matching '{KEYWORD}': {len(frontend_jobs)}")
+    frontend_jobs = filter_matching_jobs(all_jobs)
+    print(f"Jobs matching {KEYWORDS}: {len(frontend_jobs)}")
 
     seen = load_seen_jobs()
     new_jobs = [j for j in frontend_jobs if make_job_key(j) not in seen]
