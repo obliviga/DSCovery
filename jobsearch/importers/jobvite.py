@@ -29,14 +29,17 @@ def get_jobs():
             for card in job_cards:
                 title = card.find("td", class_="jv-job-list-name")
                 location = card.find("td", class_="jv-job-list-location")
-                if title and location: # only bother if we found both, and avoid some jobvite shenanigans
-                    link = root_url + card.find('a')['href']
+                if title: # only bother if we found a title, and avoid some jobvite shenanigans
+                    a = card.find('a')
+                    if not a or not a.get('href'):
+                        continue
+                    link = root_url + a['href']
                     jobs.append({
                         'company': co_name,
                         'job_id': link.rsplit('/')[-1],
                         'title': title.text.strip(),
                         'link': link,
-                        'location': location.text.strip(),
+                        'location': location.text.strip() if location else 'Unknown',
                         'pub_date': datetime.date.today()
                     })
     return jobs

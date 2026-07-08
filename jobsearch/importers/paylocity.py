@@ -35,24 +35,29 @@ def get_jobs():
         if script_tag:
             # Extract the JavaScript content and use regular expression to extract JSON
             script_content = script_tag.string
-            match = re.search(r'window\.pageData\s*=\s*(\{.*\});', script_content)
+            match = re.search(r'window\.pageData\s*=\s*(\{.*\});', script_content, re.DOTALL)
 
             if match: # Parse the JSON data
                 app_data = json.loads(match.group(1))
                 job_cards = app_data.get('Jobs', [])
 
                 for card in job_cards:
-                    pub_date_str = card['PublishedDate']
-                    pub_date = datetime.fromisoformat(pub_date_str)
-                    one_week_ago = datetime.now(pytz.utc) - timedelta(days=7)
-                    if pub_date >= one_week_ago:
+                    try:
+                        raw = card.get('PublishedDate')
+                        pub = None
+                        if raw:
+                            pub = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+                        if pub and pub.tzinfo is None:
+                            pub = pub.replace(tzinfo=pytz.utc)
                         jobs.append({
                             'company': co_name,
-                            'title': card['JobTitle'],
-                            'link': root_url + "/Recruiting/Jobs/Details/" + str(card['JobId']),
-                            'location': card['LocationName'],
-                            'job_id': card['JobId'],
-                            'pub_date': pub_date_str
+                            'title': card.get('JobTitle', ''),
+                            'link': root_url + "/Recruiting/Jobs/Details/" + str(card.get('JobId', '')),
+                            'location': card.get('LocationName', ''),
+                            'job_id': card.get('JobId', ''),
+                            'pub_date': pub
                         })
+                    except Exception:
+                        continue
     return jobs
  

@@ -121,19 +121,19 @@ def get_jobs():
                 print(f"  JSON parse error for {co_name}: {e}")
                 break
 
-            result = data.get('refineSearch', {})
+            result = data.get('refineSearch') or {}
 
             if total is None:
                 total = result.get('totalHits', 0)
                 print(f"  {total} total job(s) found")
 
-            job_list = result.get('data', {}).get('jobs', [])
+            job_list = (result.get('data') or {}).get('jobs') or []
             if not job_list:
                 break
 
             for job in job_list:
                 try:
-                    title = job.get('title', '').strip()
+                    title = (job.get('title') or '').strip()
                     if not title:
                         continue
 
@@ -167,9 +167,9 @@ def get_jobs():
                         continue
 
                     # Location: prefer city+state, fall back to country
-                    city = job.get('city', '').strip()
-                    state = job.get('state', '').strip()
-                    country = job.get('country', '').strip()
+                    city = (job.get('city') or '').strip()
+                    state = (job.get('state') or '').strip()
+                    country = (job.get('country') or '').strip()
                     if city and state:
                         location = f"{city}, {state}"
                     elif city:

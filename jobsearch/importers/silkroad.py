@@ -27,7 +27,13 @@ def _extract_job_id(href):
 def get_jobs():
     jobs = []
 
+    # Patterns used by both the HTTP and Playwright branches.
+    joblink_patterns = ['jobid=', '/job/', '/jobs/', 'job-detail', 'job-detail.aspx', 'jobdetail', '/careers/']
+    secondary_patterns = ['/openings', '/position', '/posting']
+    bad_title_re = re.compile(r'^(my account|site map|help|contact|about|privacy|terms|login|sign in|search|subscribe)$', re.I)
+
     for company_name, url in firms:
+        firm_start = len(jobs)
         r = fetch_response('get', url, importer_name=company_name, headers=settings.IMPORTER_HEADERS)
         if not r:
             continue
@@ -45,10 +51,9 @@ def get_jobs():
 
             # likely job links contain jobId or job-related path segments
             href_l = href.lower()
-            joblink_patterns = ['jobid=', '/job/', '/jobs/', 'job-detail', 'job-detail.aspx', 'jobdetail', '/careers/']
             if not any(p in href_l for p in joblink_patterns):
                 # also accept links that include 'openings' or common silkroad job path
-                if not any(p in href_l for p in ['/openings', '/position', '/posting']):
+                if not any(p in href_l for p in secondary_patterns):
                     continue
 
             title = a.get_text(strip=True)
@@ -56,7 +61,6 @@ def get_jobs():
                 continue
 
             # filter out navigation/footer links like "My Account", "Site Map", etc.
-            bad_title_re = re.compile(r'^(my account|site map|help|contact|about|privacy|terms|login|sign in|search|subscribe)$', re.I)
             if bad_title_re.search(title.strip()):
                 continue
             if len(title.strip()) < 3:
@@ -96,7 +100,7 @@ def get_jobs():
 
         # If we found nothing via plain HTTP, try a Playwright render (some SilkRoad
         # sites render job listings client-side).
-        if not jobs and sync_playwright is not None:
+        if len(jobs) == firm_start and sync_playwright is not None:
             try:
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
@@ -119,7 +123,7 @@ def get_jobs():
                         continue
                     href_l = href.lower()
                     if not any(pat in href_l for pat in joblink_patterns):
-                        if not any(pat in href_l for pat in ['/openings', '/position', '/posting']):
+                        if not any(pat in href_l for pat in secondary_patterns):
                             continue
                     title = a.get_text(strip=True)
                     if not title:

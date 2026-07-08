@@ -99,7 +99,7 @@ def get_jobs():
                     continue
 
                 # Title: prefer a heading inside the card, fall back to link text
-                title_elem = anchor.find(['h2', 'h3', 'h4', 'span'])
+                title_elem = anchor.find(['h2', 'h3', 'h4'])
                 title = (title_elem or anchor).get_text(strip=True)
                 if not title:
                     continue

@@ -53,7 +53,6 @@ def get_jobs():
                             data = None
 
                     if data:
-                        found_json = True
                         # data may be a dict with impressions/data keys or a list
                         items = []
                         if isinstance(data, dict):
@@ -69,6 +68,11 @@ def get_jobs():
                                         break
                         elif isinstance(data, list):
                             items = data
+
+                        # Only treat JSON as authoritative if it actually
+                        # yielded items; otherwise let the DOM fallback run.
+                        if len(items) > 0:
+                            found_json = True
 
                         for item in items:
                             try:

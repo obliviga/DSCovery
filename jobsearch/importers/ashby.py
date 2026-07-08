@@ -76,7 +76,7 @@ def _get_jobs_via_playwright(url, co_name):
                 print(f"No job selectors found within timeout for {co_name}")
             
             # Try to extract from updated __appData
-            app_data = page.evaluate("""
+            app_data = page.evaluate(r"""
                 () => {
                     const scripts = Array.from(document.querySelectorAll('script'));
                     for (const script of scripts) {
@@ -190,15 +190,16 @@ def _get_jobs_via_scraping(url, co_name):
         return []
     
     script_content = script_tag.string
-    match = re.search(r'window\.__appData\s*=\s*(\{.*\});', script_content)
+    assign = re.search(r'window\.__appData\s*=\s*', script_content)
 
-    if not match:
+    if not assign:
         print(f"Could not extract __appData JSON for {co_name}")
         return []
-    
+
     try:
-        app_data_json = match.group(1)
-        app_data = json.loads(app_data_json)
+        # Decode exactly one JSON object starting at the assignment, so any
+        # trailing code in the same <script> can't corrupt the parse.
+        app_data, _ = json.JSONDecoder().raw_decode(script_content, assign.end())
     except json.JSONDecodeError as e:
         print(f"Failed to parse __appData JSON for {co_name}: {e}")
         return []

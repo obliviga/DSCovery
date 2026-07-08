@@ -18,15 +18,23 @@ def get_jobs():
     job_cards = soup.find_all('a', class_="career-card")
     jobs = []
     for card in job_cards:
-        title =  card.find('div', class_="text-bold").text.strip()
-        link = root_url + card['href']
+        title_el = card.find('div', class_="text-bold")
+        if not title_el:
+            continue
+        title = title_el.text.strip()
+        href = card.get('href')
+        if not href:
+            continue
+        link = root_url + href
+        loc_el = card.find('div', class_="text-gray-1")
+        location = loc_el.text.strip() if loc_el else ''
         jobs.append({
             'company': company,
-            'job_id': link.rsplit('/')[-1],
+            'job_id': link.rstrip('/').rsplit('/', 1)[-1].split('?')[0].split('#')[0],
             'title': title,
             'link': link,
-            'location': card.find('div', class_="text-gray-1").text.strip(),
+            'location': location,
             'pub_date': datetime.date.today()
-        })    
+        })
     return jobs
  

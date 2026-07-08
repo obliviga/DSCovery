@@ -24,7 +24,10 @@ def get_jobs():
         if not r:
             continue
         soup = BeautifulSoup(r.content, "html.parser")
-        job_cards = soup.find('div', class_='jobs-list').find_all('li', class_="list-group-item")
+        container = soup.find('div', class_='jobs-list')
+        if container is None:
+            continue
+        job_cards = container.find_all('li', class_="list-group-item")
         for card in job_cards:
             heading = card.find(class_="list-group-item-heading")
             if heading is None:

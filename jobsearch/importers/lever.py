@@ -34,11 +34,16 @@ def get_jobs():
             job_cards = job_wrapper.find_all('div', class_="posting")
             for card in job_cards:
                 title = card.find('a', class_='posting-title')
+                h5 = card.find('h5')
+                if not title or not h5 or not title.get('href'):
+                    continue
+                wt = card.find('span', class_='workplaceTypes')
+                location = wt.text.strip() if wt else ''
                 jobs.append({
                     'company': co_name,
-                    'title': card.find('h5').text.strip(),
+                    'title': h5.text.strip(),
                     'link':  title['href'],
-                    'location': card.find('span', class_="workplaceTypes").text.strip(),
+                    'location': location,
                     'job_id': title['href'].rsplit('/')[-1],
                     'pub_date': datetime.date.today()
                 })

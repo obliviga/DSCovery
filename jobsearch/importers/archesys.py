@@ -12,12 +12,19 @@ def get_jobs():
     if not r:
         return []
     soup = BeautifulSoup(r.content, "html.parser")
-    job_cards = soup.find('div', class_='job_wrapper').find_all('div', class_="job_list")
+    wrapper = soup.find('div', class_='job_wrapper')
+    if wrapper is None:
+        return []
+    job_cards = wrapper.find_all('div', class_="job_list")
     jobs = []
     for card in job_cards:
-        link = url + card.find('a')['href'].replace('/roles', '')
-        title = card.find("a").text.strip()
-        location = card.find('div', class_="text-size-small").text.strip()
+        a = card.find('a')
+        if a is None or not a.get('href'):
+            continue
+        link = url + a['href'].replace('/roles', '')
+        title = a.text.strip()
+        loc = card.find('div', class_="text-size-small")
+        location = loc.text.strip() if loc else ''
         jobs.append({
             'company': 'ArcheSys',
             'title': title,
