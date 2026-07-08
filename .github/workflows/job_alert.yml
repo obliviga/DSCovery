@@ -2,11 +2,25 @@ name: Job Alert
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours
-  workflow_dispatch: # manual trigger for testing
+    - cron: '0 */6 * * *'   # every 6 hours -> regular (new matches only)
+    - cron: '0 14 * * 1'    # Mondays 14:00 UTC -> weekly full digest
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Which email to send'
+        default: 'regular'
+        type: choice
+        options:
+          - regular
+          - weekly
 
 permissions:
   contents: write
+
+# Never let two runs commit seen_jobs.json at the same time.
+concurrency:
+  group: job-alert
+  cancel-in-progress: false
 
 jobs:
   check-jobs:
@@ -25,11 +39,24 @@ jobs:
       - name: Install Playwright browsers
         run: python -m playwright install --with-deps chromium
 
+      - name: Determine mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 14 * * 1" ]; then
+            echo "mode=weekly" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=regular" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run job alert
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          ALERT_MODE: ${{ steps.mode.outputs.mode }}
         run: python job_alert.py
 
       - name: Commit seen jobs state
@@ -37,5 +64,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add seen_jobs.json
-          git diff --cached --quiet || git commit -m "Update seen jobs state"
+          if git diff --cached --quiet; then
+            echo "No state change to commit."
+            exit 0
+          fi
+          git commit -m "Update seen jobs state"
+          git pull --rebase --autostash origin ${{ github.ref_name }}
           git push
