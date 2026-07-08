@@ -16,6 +16,14 @@ firms = [
     ('Skyward', 'skywarditsolutions'),
     ('BLEN', 'blencorp'),
     ('Bellese', 'bellese'),
+    # Civic-tech / gov digital-services firms (verified live via Lever API)
+    ('Makpar', 'makpar'),
+    ('Civitech', 'civitech'),
+    ('Altarum', 'altarum'),
+    ('CDC Foundation', 'cdcfoundation'),
+    ('NJ Office of Innovation', 'NJStateOfficeofInnovation'),
+    ('Reinventing Geospatial', 'rgi'),
+    ('INflow Federal', 'inflowfed'),
 ]
 
 

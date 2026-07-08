@@ -18,6 +18,22 @@ firms = [
     # ('Softrams', "triafederal"),
     ('Inroads', 'inroads'),
     ('Truss', 'trussworksinc'),
+    # Civic-tech / DSC-adjacent firms (verified live via the embed board)
+    ('BlueLabs', 'bluelabsanalyticsinc'),
+    ('Clarity Innovations', 'clarityinnovates'),
+    ('MetroStar', 'metrostarsystems'),
+    ('540', '540'),
+    ('Development Seed', 'developmentseed'),
+    ('Excella', 'excella'),
+    ('Forum One', 'forumone'),
+    ('Rise8', 'rise8'),
+    ('Defense Unicorns', 'defenseunicorns'),
+    ('Civis Analytics', 'civisanalytics'),
+    ('Code for America', 'codeforamerica'),
+    ('LTS', 'lts'),
+    ('CSCI Consulting', 'csciconsulting'),
+    ('Peregrine Technologies', 'peregrinetechnologies'),
+    ('Mark43', 'mark43'),
 ]
 
 
@@ -60,8 +76,10 @@ def get_jobs():
                         # Remove extraneous child elements (tags, badges, etc.)
                         if job_title_elem:
                             for tag in job_title_elem.find_all(['span', 'badge', 'em', 'strong']):
-                                # defensive: ensure we have a Tag (not a string/comment)
-                                if not isinstance(tag, Tag):
+                                # defensive: skip strings/comments, and tags already
+                                # decomposed as a child of an earlier match (attrs is
+                                # None) — reading .get on those raises and drops the job.
+                                if not isinstance(tag, Tag) or tag.attrs is None:
                                     continue
                                 classes_list = tag.get('class') or []
                                 try:

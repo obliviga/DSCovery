@@ -12,7 +12,15 @@ root_url = 'https://jobs.ashbyhq.com'
 firms = [
     ('Focus Consulting', 'focus'),
     ('Verdance', 'verdance'),
-    ('Mighty Acorn', 'mightyacorndigital')
+    ('Mighty Acorn', 'mightyacorndigital'),
+    # Civic-tech / govtech firms (verified live via Ashby posting API)
+    ('OpenGov', 'opengov'),
+    ('Promise', 'Promise'),
+    ('Kaizen Labs', 'kaizenlabs'),
+    ('GovWell', 'govwell'),
+    ('Propel', 'propel'),
+    ('Nuna', 'nuna'),
+    ('Element 84', 'element84'),
 ]
 
 try:
