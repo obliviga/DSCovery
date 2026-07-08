@@ -52,6 +52,15 @@ KEYWORDS = ["front", "accessibility"]
 # location names one of these cities.
 ALLOWED_CITIES = ["los angeles"]
 
+# Whole-string location values that mean "anywhere in the US" — treated as
+# remote even without the literal word "remote". Matched against the fully
+# normalized location, so a city+country string like "San Francisco, CA,
+# United States" (an on-site role) is NOT caught.
+NATIONAL_LOCATIONS = {
+    "united states", "united states of america", "usa", "us", "u.s.", "u.s.a.",
+    "all locations", "nationwide", "anywhere", "us-based",
+}
+
 # Forget jobs we haven't seen for this long, so the state file can't grow
 # forever. A job gone this long is effectively a brand-new posting if it
 # ever comes back.
@@ -117,7 +126,11 @@ def location_ok(location):
     loc = (location or "").lower()
     if any(city in loc for city in ALLOWED_CITIES):
         return True
-    return "remote" in loc
+    if "remote" in loc:
+        return True
+    # Bare national values ("United States", "USA", "All Locations") with no
+    # city are effectively remote/anywhere.
+    return _norm(location) in NATIONAL_LOCATIONS
 
 
 def dedup_key(job):
