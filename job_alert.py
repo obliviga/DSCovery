@@ -48,6 +48,10 @@ IMPORTERS_DIR = BASE_DIR / "jobsearch" / "importers"
 # Loose, case-insensitive substring match on the job title.
 KEYWORDS = ["front", "accessibility"]
 
+# Only surface remote roles. Hybrid / on-site roles are dropped UNLESS the
+# location names one of these cities.
+ALLOWED_CITIES = ["los angeles"]
+
 # Forget jobs we haven't seen for this long, so the state file can't grow
 # forever. A job gone this long is effectively a brand-new posting if it
 # ever comes back.
@@ -102,6 +106,20 @@ def title_matches(title):
     return any(keyword in lowered for keyword in KEYWORDS)
 
 
+def location_ok(location):
+    """Keep remote roles, plus anything in an allowed city (e.g. Los Angeles).
+
+    Hybrid / on-site roles are dropped. "Remote" appears in every remote
+    variant we see ("Remote", "United States - Remote", "Remote (US)",
+    "Washington D.C. or Remote", ...); hybrid/on-site strings never contain it,
+    so a simple substring test is both sufficient and conservative.
+    """
+    loc = (location or "").lower()
+    if any(city in loc for city in ALLOWED_CITIES):
+        return True
+    return "remote" in loc
+
+
 def dedup_key(job):
     """One logical role — stable no matter which board or id it came from."""
     return f"{_norm(job.get('company'))}|{_norm(job.get('title'))}"
@@ -117,7 +135,10 @@ def state_key(job):
 
 
 def matching_jobs(jobs):
-    return [job for job in jobs if title_matches(job.get("title"))]
+    return [
+        job for job in jobs
+        if title_matches(job.get("title")) and location_ok(job.get("location"))
+    ]
 
 
 def dedup(jobs):

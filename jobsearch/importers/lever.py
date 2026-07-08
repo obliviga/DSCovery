@@ -45,8 +45,14 @@ def get_jobs():
                 h5 = card.find('h5')
                 if not title or not h5 or not title.get('href'):
                     continue
+                # Combine the workplace-type badge (Remote/Hybrid/On-site) with
+                # the actual place, e.g. "Remote — San Francisco", so downstream
+                # filters can read both signals. The badge alone is "On-site —".
                 wt = card.find('span', class_='workplaceTypes')
-                location = wt.text.strip() if wt else ''
+                loc_el = card.find('span', class_='sort-by-location')
+                workplace = wt.get_text(strip=True).replace('\xa0', ' ').rstrip('—').strip() if wt else ''
+                place = loc_el.get_text(strip=True) if loc_el else ''
+                location = ' — '.join(p for p in [workplace, place] if p) or 'Unknown'
                 jobs.append({
                     'company': co_name,
                     'title': h5.text.strip(),
