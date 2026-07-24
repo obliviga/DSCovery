@@ -166,12 +166,13 @@ def fetch_adzuna():
     jobs = []
     seen_ids = set()
     for term in ADZUNA_QUERIES:
+        # Adzuna has no remote flag (where=remote geocodes to nothing), so we
+        # put "remote" in the keywords — that returns roles that mention remote.
         params = urllib.parse.urlencode({
             "app_id": app_id,
             "app_key": app_key,
             "results_per_page": 50,
-            "what": term,
-            "where": "remote",
+            "what": f"{term} remote",
             "max_days_old": 30,
             "content-type": "application/json",
         })
@@ -193,8 +194,13 @@ def fetch_adzuna():
             blob = f"{title} {place} {r.get('description') or ''}".lower()
             if "remote" not in blob:
                 continue
+            # Drop roles whose title names a foreign country ("... (Canada)");
+            # the US filter handles a foreign `place` via the clean location.
+            if any(f in title.lower() for f in FOREIGN_HINTS):
+                continue
+            location = (f"Remote, {place}".rstrip(", ").strip()) or "Remote"
             jobs.append(_job(company, title, r.get("redirect_url"),
-                             "Remote, US", "adzuna", rid))
+                             location, "adzuna", rid))
     return jobs
 
 
