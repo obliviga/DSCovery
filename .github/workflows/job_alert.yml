@@ -59,11 +59,20 @@ jobs:
           ALERT_MODE: ${{ steps.mode.outputs.mode }}
         run: python job_alert.py
 
+      - name: Run broad job alert (all other companies)
+        continue-on-error: true  # a broad-alert failure must not block the civic state commit
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: python job_alert_broad.py
+
       - name: Commit seen jobs state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add seen_jobs.json
+          git add seen_jobs.json seen_jobs_broad.json
           if git diff --cached --quiet; then
             echo "No state change to commit."
             exit 0
