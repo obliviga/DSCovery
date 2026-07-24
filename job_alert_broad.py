@@ -28,6 +28,7 @@ import json
 import os
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -147,11 +148,62 @@ def fetch_jobicy():
     return jobs
 
 
+# Adzuna searches (broad coverage). Requires free credentials — set the
+# ADZUNA_APP_ID / ADZUNA_APP_KEY secrets; without them this source is skipped.
+ADZUNA_QUERIES = [
+    "front end engineer", "front end developer", "frontend developer",
+    "accessibility engineer", "ui engineer",
+]
+
+
+def fetch_adzuna():
+    app_id = os.environ.get("ADZUNA_APP_ID", "").strip()
+    app_key = os.environ.get("ADZUNA_APP_KEY", "").strip()
+    if not app_id or not app_key:
+        print("  adzuna: skipped (no ADZUNA_APP_ID / ADZUNA_APP_KEY)")
+        return []
+
+    jobs = []
+    seen_ids = set()
+    for term in ADZUNA_QUERIES:
+        params = urllib.parse.urlencode({
+            "app_id": app_id,
+            "app_key": app_key,
+            "results_per_page": 50,
+            "what": term,
+            "where": "remote",
+            "max_days_old": 30,
+            "content-type": "application/json",
+        })
+        try:
+            data = _get_json(f"https://api.adzuna.com/v1/api/jobs/us/search/1?{params}")
+        except Exception as e:  # noqa: BLE001 — one query failing must not kill the rest
+            print(f"  adzuna ({term}): FAILED ({e})")
+            continue
+        for r in data.get("results", []):
+            rid = r.get("id")
+            if rid in seen_ids:
+                continue
+            seen_ids.add(rid)
+            title = re.sub(r"<[^>]+>", "", r.get("title") or "")
+            company = re.sub(r"<[^>]+>", "", (r.get("company") or {}).get("display_name") or "")
+            place = (r.get("location") or {}).get("display_name") or ""
+            # Adzuna's US index isn't remote-only; require an explicit remote
+            # signal in the title/location/description before including.
+            blob = f"{title} {place} {r.get('description') or ''}".lower()
+            if "remote" not in blob:
+                continue
+            jobs.append(_job(company, title, r.get("redirect_url"),
+                             "Remote, US", "adzuna", rid))
+    return jobs
+
+
 def fetch_all():
     jobs = []
     for name, fetch in (("remotive", fetch_remotive),
                         ("remoteok", fetch_remoteok),
-                        ("jobicy", fetch_jobicy)):
+                        ("jobicy", fetch_jobicy),
+                        ("adzuna", fetch_adzuna)):
         got = fetch()
         print(f"  {name}: {len(got)} candidates")
         jobs.extend(got)

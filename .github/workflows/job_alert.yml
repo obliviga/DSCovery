@@ -66,6 +66,8 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
         run: python job_alert_broad.py
 
       - name: Commit seen jobs state
