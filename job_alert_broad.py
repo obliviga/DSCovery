@@ -53,6 +53,9 @@ ROLE_PHRASES = [
     "ui engineer", "ui developer",
 ]
 
+# Companies to always exclude from the broad alert (normalized, lowercase).
+BLOCKED_COMPANIES = {"reddit"}
+
 # Location classification. Aggregator location fields are free-form, so we
 # match explicit US signals (word-bounded — "us"/"u.s." must not fire inside
 # "business" or "belarus"), a set of foreign regions, and generic global
@@ -278,13 +281,20 @@ def civic_company_names():
     return names
 
 
-def is_civic(company, civic_names):
-    """True if `company` is one of the civic-tech firms. Matches a civic name
-    as a whole word-run so "Nava" also excludes "Nava PBC" / "Nava, Inc.",
-    without excluding unrelated names like "Navasota".
-    """
+def _company_in(company, names):
+    """True if `company` matches any name as a whole word-run, punctuation- and
+    case-insensitively — so "Nava" matches "Nava PBC"/"Nava, Inc." but not
+    "Navasota"."""
     padded = f" {_alnum(company)} "
-    return any(f" {name} " in padded for name in civic_names)
+    return any(f" {name} " in padded for name in names)
+
+
+def is_civic(company, civic_names):
+    return _company_in(company, civic_names)
+
+
+def is_blocked(company):
+    return _company_in(company, BLOCKED_COMPANIES)
 
 
 def dedup(jobs):
@@ -356,6 +366,7 @@ def main():
         if role_matches(job["title"])
         and us_remote_ok(job["location"])
         and not is_civic(job["company"], civic)
+        and not is_blocked(job["company"])
     ])
     print(f"Matches (role + US + non-civic): {len(matches)}")
 
